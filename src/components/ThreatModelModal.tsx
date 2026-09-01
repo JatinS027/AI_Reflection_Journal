@@ -96,7 +96,7 @@ export const ThreatModelModal: React.FC = () => {
                 <td className="p-3.5 sm:p-4">
                   <span className="inline-flex items-center gap-1 text-emerald-700 font-medium">
                     <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
-                    Resilient Model Fallback Ladder (Gemini 3.6 Flash → 3.1 Flash-Lite → Flash-Latest → 3.7 Flash).
+                    Resilient Model Fallback Ladder (Gemini 3.1 Flash-Lite → 3.7 Flash → Flash-Latest → 3.6 Flash).
                   </span>
                 </td>
               </tr>

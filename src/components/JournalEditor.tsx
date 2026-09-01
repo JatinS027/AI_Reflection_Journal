@@ -20,13 +20,10 @@ import type {
   JournalEntry, 
   JournalCategory, 
   JournalMood, 
-  JournalLocation,
   ChatMessage, 
   UserProfile 
 } from '../types';
 import { saveJournalEntry } from '../firebase';
-import { LocationPicker } from './LocationPicker';
-import { LocationBadge } from './LocationBadge';
 
 interface JournalEditorProps {
   user: UserProfile;
@@ -65,7 +62,6 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
   const [title, setTitle] = useState<string>(() => currentEntry?.title || '');
   const [category, setCategory] = useState<JournalCategory>(() => currentEntry?.category || 'reflection');
   const [mood, setMood] = useState<JournalMood>(() => currentEntry?.mood || 'reflective');
-  const [location, setLocation] = useState<JournalLocation | undefined>(() => currentEntry?.location);
   const [initialPrompt, setInitialPrompt] = useState<string>(() => currentEntry?.prompt || '');
   
   // Conversation & AI state
@@ -90,7 +86,6 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
       setTitle(currentEntry.title);
       setCategory(currentEntry.category);
       setMood(currentEntry.mood || 'reflective');
-      setLocation(currentEntry.location);
       setInitialPrompt(currentEntry.prompt);
       setMessages(currentEntry.messages || []);
       setSummary(currentEntry.summary);
@@ -161,7 +156,6 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
           prompt: initialPrompt.trim(),
           category,
           mood,
-          location,
           history: [],
         }),
       });
@@ -194,7 +188,6 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
         title: activeTitle,
         category,
         mood,
-        location,
         prompt: initialPrompt.trim(),
         response: data.text,
         messages: newMessages,
@@ -245,7 +238,6 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
           prompt: currentText,
           category,
           mood,
-          location,
           history: historyPayload,
         }),
       });
@@ -271,7 +263,6 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
         title: title.trim() || `Reflection: ${initialPrompt.slice(0, 30)}`,
         category,
         mood,
-        location,
         prompt: initialPrompt,
         response: finalMessages[1]?.text || data.text,
         summary,
@@ -324,7 +315,6 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
         title: title.trim() || `Reflection: ${initialPrompt.slice(0, 30)}`,
         category,
         mood,
-        location,
         prompt: initialPrompt,
         response: messages[1]?.text || '',
         summary: parsed.summary,
@@ -349,16 +339,9 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
       {/* Top Header & Save Status Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-stone-200">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-serif text-stone-900 font-semibold tracking-tight">
-              {messages.length > 0 ? 'Reflection Workspace' : 'New Journal Entry'}
-            </h1>
-            {location && (
-              <div className="hidden sm:block">
-                <LocationBadge location={location} />
-              </div>
-            )}
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-serif text-stone-900 font-semibold tracking-tight">
+            {messages.length > 0 ? 'Reflection Workspace' : 'New Journal Entry'}
+          </h1>
           <p className="text-xs sm:text-sm text-stone-500 mt-0.5">
             Isolated under <code className="text-xs bg-stone-100 text-stone-700 px-1 py-0.5 rounded font-mono">/users/{user.uid.slice(0, 6)}.../interactions</code>
           </p>
@@ -385,7 +368,6 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
                   title: title || 'Journal Entry',
                   category,
                   mood,
-                  location,
                   prompt: initialPrompt,
                   response: messages[1]?.text || '',
                   summary,
@@ -503,11 +485,6 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
 
       </div>
 
-      {/* Location-Aware Pinning (Google Maps) */}
-      <div className="mt-4">
-        <LocationPicker location={location} onChange={setLocation} />
-      </div>
-
       {/* Dynamic Gemini Prompt Recommendations */}
       {messages.length === 0 && (
         <div className="mt-6 p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80">
@@ -573,7 +550,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
               {isSubmitting ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin text-amber-200" />
-                  <span>Reflecting with Gemini 3.6 Flash...</span>
+                  <span>Reflecting with Gemini...</span>
                 </>
               ) : (
                 <>

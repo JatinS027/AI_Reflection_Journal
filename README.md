@@ -1,6 +1,6 @@
 # AI Reflection Journal — User-Authenticated Gemini & Firestore Application
 
-A full-stack, user-authenticated journaling and reflection platform built with **React**, **Google Gemini 3.6 Flash API**, and **Cloud Firestore**, designed for complete owner-bound privacy, multi-turn AI reframing, and automated synthesis.
+A full-stack, user-authenticated journaling and reflection platform built with **React**, **Google Gemini API**, and **Cloud Firestore**, designed for complete owner-bound privacy, multi-turn AI reframing, and automated synthesis.
 
 ---
 
@@ -8,7 +8,7 @@ A full-stack, user-authenticated journaling and reflection platform built with *
 
 1. **Passwordless Federated Authentication**: Secure Google Sign-In via Firebase Auth; zero passwords or plaintext credentials stored.
 2. **Strict User-Bound Data Isolation**: All journal reflections, transcripts, and AI summaries are persisted exclusively under `/users/{userId}/interactions/{interactionId}` protected by deployed Firestore Security Rules.
-3. **Multi-Turn Gemini Reflections**: Empathetic conversational partner using **Gemini 3.6 Flash** with a resilient model fallback ladder (`gemini-3.6-flash` → `gemini-3.1-flash-lite` → `gemini-flash-latest` → `gemini-3.7-flash`).
+3. **Multi-Turn Gemini Reflections**: Empathetic conversational partner using Gemini with a resilient model fallback ladder (`gemini-3.1-flash-lite` → `gemini-3.7-flash` → `gemini-flash-latest` → `gemini-3.6-flash`).
 4. **Actionable AI Syntheses**: One-click extraction of executive summaries, mindset patterns, and suggested micro-actions.
 5. **Private Archive & Search**: Filter, search, read, and export journal entries as Markdown files.
 6. **Zero-Hardcoding Hygiene**: Server-side proxy for Gemini API keys with Google Cloud Secret Manager compatibility.

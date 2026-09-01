@@ -60,7 +60,7 @@ const TEST_CASES: TestCase[] = [
       '4. Click one of the suggested prompt cards to populate the textarea.',
       '5. Add additional thoughts in the reflection editor and click "Reflect & Converse with Gemini".'
     ],
-    expectedResult: 'Gemini 3.6 Flash analyzes the reflection, returns an empathetic reply, and automatically saves to Firestore with "Saved in Firestore" status.'
+    expectedResult: 'Gemini analyzes the reflection, returns an empathetic reply, and automatically saves to Firestore with "Saved in Firestore" status.'
   },
   {
     id: 'TC-AI-01',
