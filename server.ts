@@ -40,11 +40,43 @@ interface FallbackOptions {
   config?: Record<string, any>;
 }
 
+// Helper to extract clean error message and status code from Gemini errors
+function parseGeminiError(err: any): { message: string; statusCode: number | null; isTransient: boolean } {
+  let message = err?.message || String(err || 'Unknown error');
+  let statusCode: number | null = null;
+
+  try {
+    // Attempt parsing if message is a JSON string
+    if (typeof message === 'string' && message.startsWith('{') && message.includes('"error"')) {
+      const parsed = JSON.parse(message);
+      if (parsed?.error) {
+        statusCode = parsed.error.code || null;
+        message = parsed.error.message || message;
+      }
+    }
+  } catch {
+    // Ignore JSON parsing failure and retain raw message
+  }
+
+  if (!statusCode && err?.status) {
+    statusCode = typeof err.status === 'number' ? err.status : parseInt(err.status, 10) || null;
+  }
+
+  const isTransient = statusCode === 503 || statusCode === 429 || statusCode === 500 || statusCode === 504 ||
+    message.includes('503') || message.includes('high demand') || message.includes('UNAVAILABLE') || message.includes('RESOURCE_EXHAUSTED');
+
+  return { message, statusCode, isTransient };
+}
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function generateContentWithFallback(options: FallbackOptions) {
   const ai = getGenAI();
   let lastError: any = null;
+  let lastParsedError: { message: string; statusCode: number | null } = { message: '', statusCode: null };
 
-  for (const model of MODEL_FALLBACK_LADDER) {
+  for (let i = 0; i < MODEL_FALLBACK_LADDER.length; i++) {
+    const model = MODEL_FALLBACK_LADDER[i];
     try {
       const response = await ai.models.generateContent({
         model,
@@ -63,13 +95,25 @@ async function generateContentWithFallback(options: FallbackOptions) {
         };
       }
     } catch (err: any) {
-      console.warn(`[Gemini Fallback] Model ${model} encountered error:`, err?.message || err);
+      const { message, statusCode, isTransient } = parseGeminiError(err);
       lastError = err;
-      // Continue to next model in fallback ladder
+      lastParsedError = { message, statusCode };
+
+      const nextModel = i < MODEL_FALLBACK_LADDER.length - 1 ? MODEL_FALLBACK_LADDER[i + 1] : null;
+      console.warn(
+        `[Gemini Fallback] Model ${model} returned ${statusCode ? `status ${statusCode}` : 'error'}: "${message}". ` +
+        (nextModel ? `Attempting next fallback model: ${nextModel}...` : 'No further models in fallback ladder.')
+      );
+
+      // If transient error (503 / 429), brief pause before attempting next candidate
+      if (isTransient && nextModel) {
+        await delay(250);
+      }
     }
   }
 
-  throw new Error(lastError?.message || 'All Gemini models in fallback ladder failed to generate content.');
+  const failureMsg = lastParsedError.message || lastError?.message || 'All Gemini models in fallback ladder are currently experiencing high demand. Please retry in a moment.';
+  throw new Error(failureMsg);
 }
 
 // --- API Endpoints ---
@@ -86,11 +130,16 @@ app.post('/api/gemini/reflect', async (req: Request, res: Response) => {
     const prompt = typeof payload.prompt === 'string' ? payload.prompt.trim() : '';
     const category = typeof payload.category === 'string' ? payload.category : 'reflection';
     const mood = typeof payload.mood === 'string' ? payload.mood : 'reflective';
+    const location = (payload.location && typeof payload.location === 'object') ? payload.location : null;
     const history = Array.isArray(payload.history) ? payload.history : [];
 
     if (!prompt) {
       return res.status(400).json({ error: 'Journal prompt text is required.' });
     }
+
+    const locationContext = location && (location.name || location.address || (location.lat && location.lng))
+      ? `\n- Pinned Location: ${[location.name, location.address].filter(Boolean).join(', ') || `Coordinates (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})`}. When appropriate or evocative, subtly ground your reflection in the mindfulness or environment of this place.`
+      : '';
 
     const systemInstruction = `You are a supportive, empathetic, and insightful AI Reflection Companion and Journaling Mentor.
 Your purpose is to help the user unpack their thoughts, recognize emotional patterns, practice cognitive reframing, and uncover actionable insights or creative ideas.
@@ -100,7 +149,7 @@ Guidelines:
 - For category "${category}" and user mood "${mood}":
   - Acknowledge and validate feelings genuinely without toxic positivity.
   - Highlight key themes, strengths, or unspoken tensions in what the user shared.
-  - Offer a reframing perspective or creative brainstorming angles when helpful.
+  - Offer a reframing perspective or creative brainstorming angles when helpful.${locationContext}
   - End with 1-2 open-ended, gently probing reflection questions to spark deeper self-discovery.
 - Format responses cleanly with readable paragraphs, markdown bullet points for clarity, and concise structure. Avoid overwhelming walls of text.`;
 

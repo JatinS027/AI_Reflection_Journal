@@ -29,12 +29,22 @@ export interface ChatMessage {
   timestamp: string;
 }
 
+export interface JournalLocation {
+  lat: number;
+  lng: number;
+  name?: string;
+  address?: string;
+  placeId?: string;
+  notes?: string;
+}
+
 export interface JournalEntry {
   id: string;
   userId: string;
   title: string;
   category: JournalCategory;
   mood?: JournalMood;
+  location?: JournalLocation;
   prompt: string;
   response: string;
   summary?: string;
@@ -49,6 +59,7 @@ export interface ReflectionRequest {
   prompt: string;
   category?: JournalCategory;
   mood?: JournalMood;
+  location?: JournalLocation;
   title?: string;
   history?: Array<{ role: 'user' | 'model'; text: string }>;
 }

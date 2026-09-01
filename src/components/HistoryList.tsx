@@ -14,6 +14,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import type { JournalEntry, JournalCategory, JournalMood } from '../types';
+import { LocationBadge } from './LocationBadge';
 
 interface HistoryListProps {
   entries: JournalEntry[];
@@ -69,7 +70,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
     ).join('\n---\n\n');
 
     const mdContent = `# ${entry.title}
-*Category: ${entry.category} | Mood: ${entry.mood || 'N/A'} | Created: ${new Date(entry.createdAt).toLocaleString()}*
+*Category: ${entry.category} | Mood: ${entry.mood || 'N/A'}${entry.location ? ` | Location: ${entry.location.name || 'Pinned Spot'} (${entry.location.lat.toFixed(4)}, ${entry.location.lng.toFixed(4)})` : ''} | Created: ${new Date(entry.createdAt).toLocaleString()}*
 
 ${entry.summary ? `## AI Summary & Takeaways\n${entry.summary}\n\n` : ''}
 ${entry.keyInsights && entry.keyInsights.length > 0 ? `### Key Insights\n${entry.keyInsights.map((k) => `- ${k}`).join('\n')}\n\n` : ''}
@@ -190,6 +191,9 @@ ${transcript || entry.prompt}
                       <span className="px-2 py-0.5 text-[11px] font-medium rounded-md bg-amber-50 text-amber-900 border border-amber-200">
                         Mood: {entry.mood}
                       </span>
+                    )}
+                    {entry.location && (
+                      <LocationBadge location={entry.location} />
                     )}
                     <span className="text-[11px] text-stone-400 flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
